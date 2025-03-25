@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "d3f9bf0915714432fb76355e43ac43028a8c4cfd881e5d4343c79b411efdd504"
+            "sha256": "b12a1bcabf0a61d81a99d5ba753620482d5804d27d36b2780212e25b64708359"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -96,6 +96,14 @@
             ],
             "index": "pypi",
             "version": "==0.21.1"
+        },
+        "prometheus-fastapi-instrumentator": {
+            "hashes": [
+                "sha256:978130f3c0bb7b8ebcc90d35516a6fe13e02d2eb358c8f83887cdef7020c31e9",
+                "sha256:be7cd61eeea4e5912aeccb4261c6631b3f227d8924542d79eaf5af3f439cbe5e"
+            ],
+            "index": "pypi",
+            "version": "==7.1.0"
         },
         "psutil": {
             "hashes": [

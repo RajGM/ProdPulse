@@ -12,6 +12,7 @@ pyyaml = "*"
 slack-sdk = "*"
 loguru = "*"
 tenacity = "*"
+prometheus-fastapi-instrumentator = "*"
 
 [dev-packages]
 pytest = "*"
