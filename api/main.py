@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from prometheus_client import make_asgi_app, Gauge
+from prometheus_client import make_asgi_app, Gauge, Counter
 from starlette.responses import JSONResponse
 
 import asyncio
@@ -15,12 +15,18 @@ async def lifespan(app: FastAPI):
     print("Starting metrics collection task...")
     # Start the background task that collects metrics every 10 seconds.
     app.state.metrics_task = asyncio.create_task(collect_metrics(interval=3.0))
+    app.state.gauge_task = asyncio.create_task(update_gauges(interval=10.0))
+    yield
+    task1 = app.state.gauge_task
+    task1.cancel()
+
     yield
     # Shutdown: cancel the background task
     task = app.state.metrics_task
     task.cancel()
     try:
         await task
+        await task1
     except asyncio.CancelledError:
         print("Metrics collection task cancelled.")
 
@@ -29,13 +35,6 @@ app = FastAPI(title="ProdPulse Monitoring Service")
 
 # Create a Prometheus gauge metric as an example
 #cpu_usage = Gauge("cpu_usage_percent", "Current CPU usage in percent")
-
-# Dummy in-memory store for current metrics
-current_metrics = {
-    "cpu_usage": 0.0,
-    "memory_usage": 0.0,
-    "disk_usage": 0.0
-}
 
 # Endpoint to retrieve current metrics
 @app.get("/metrics/live", response_class=JSONResponse)
@@ -57,16 +56,21 @@ async def get_live_metrics():
         "disk_usage": disk_value,
     }
 
+# Create a custom counter metric for tracking health check requests.
+health_check_counter = Counter(
+    "health_check_requests_total", "Total number of health check requests"
+)
+
 # Endpoint for health check
 @app.get("/health")
 async def health_check():
+    health_check_counter.inc()
     return {"status": "ok"}
 
 # Integrate Prometheus metrics endpoint using ASGI app
 # Create a separate ASGI app for Prometheus and mount it on /metrics
 prometheus_app = make_asgi_app()
 app.mount("/metrics", prometheus_app)
-
 
 # Heavy crypto endpoint.
 @app.get("/heavy", response_class=JSONResponse)
@@ -84,3 +88,14 @@ def heavy_crypto():
     # Convert the final hash digest to an integer.
     result = int.from_bytes(data, byteorder="big")
     return {"result": result}
+
+
+# Define a background task to simulate updating gauges (e.g., via a custom collector)
+async def update_gauges(interval: float = 10.0):
+    import psutil
+    while True:
+        # Update gauges using psutil
+        cpu_usage_gauge.set(psutil.cpu_percent(interval=None))
+        memory_usage_gauge.set(psutil.virtual_memory().percent)
+        disk_usage_gauge.set(psutil.disk_usage('/').percent)
+        await asyncio.sleep(interval)
